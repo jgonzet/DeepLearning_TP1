@@ -1,5 +1,4 @@
-print("Hola Mundo!")
-
-for i in range(10): print(i)
-
-print("Chau Mundo!")
+import numpy as np
+nombre = input("Ingrese su nombre: ")
+print(f"Hola Mundo, y particularmente a {nombre}")
+print(f"El seno de la longitud del nombre es: {np.sin(len(nombre))}")
