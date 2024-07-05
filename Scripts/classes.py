@@ -327,9 +327,6 @@ class Persona: #id,Full Name,year of birth,Gender,Zip Code
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
-
-##############################                                                                         TRABAJADOR                                                                ##############################
-
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
 ##################################################################################################################################################################################################################
@@ -464,6 +461,12 @@ class Trabajador: #id,Position,Category,Working Hours,Start Date
         plt.ylabel('Cantidad de trabajadores')
         plt.show()
 
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
 
 class Score: #,user_id,movie_id,rating,Date
     def __init__(self, user_id, movie_id, rating, date):
@@ -567,3 +570,103 @@ class Score: #,user_id,movie_id,rating,Date
         plt.xlabel('Año')
         plt.ylabel('Cantidad de scores')
         plt.show()
+
+
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+##################################################################################################################################################################################################################
+
+class Sistema:
+    def __init__(self,folder = '../Data/'):            
+        self.df_movies = Pelicula.create_df_from_csv(folder+'peliculas.csv')
+        self.df_scores = Score.create_df_from_csv(folder+'scores.csv')
+        self.df_people = Persona.create_df_from_csv(folder+'personas.csv')
+        self.df_users = Usuario.create_df_from_csv(folder+'usuarios.csv')
+        self.df_employees = Trabajador.create_df_from_csv(folder+'trabajadores.csv')
+    
+    def alta_user(self,full_name,year_of_birth,gender,zip_code,ocupacion=None, active_since=None):
+        id = self.df_people['id'].max()+1
+        new_person = Persona(full_name = full_name,year_birth = year_of_birth, gender = gender, zip_code = zip_code,id=id)
+        self.df_people = new_person.write_df(self.df_people)
+        new_user = Usuario(ocupacion=ocupacion,fecha_alta=active_since,id=id)
+        self.df_users = new_user.write_df(self.df_users)    
+    def baja_user(self,id,erase_person=False):    
+        self.df_users = self.df_users[self.df_users['id'] != id]
+        if erase_person:
+            self.df_people = self.df_people[self.df_people['id'] != id]
+
+    def alta_empleado(self,full_name,year_of_birth,gender,zip_code,position=None, category=None,working_hours=None,start_date=None):
+        id = self.df_people['id'].max()+1
+        new_person = Persona(full_name = full_name,year_birth = year_of_birth, gender = gender, zip_code = zip_code,id=id)
+        self.df_people = new_person.write_df(self.df_people)
+        new_employee = Trabajador(position=position,category=category,working_hours=working_hours,start_date=start_date,id=id)
+        self.df_employees = new_employee.write_df(self.df_employees)
+    def baja_empleado(self,id,erase_person=False):
+        self.df_employees = self.df_employees[self.df_employees['id'] != id]
+        if erase_person:
+            self.df_people = self.df_people[self.df_people['id'] != id]
+
+    def alta_pelicula(self,nombre, anio, generos, id = None):
+        new_movie = Pelicula(nombre=nombre,anio=anio,generos=generos,id=id)
+        self.df_movies = new_movie.write_df(self.df_movies)
+    def baja_pelicula(self,id):
+        self.df_movies = self.df_movies[self.df_movies['id'] != id]
+
+    def alta_puntaje(self, user_id, movie_id, rating, date):
+        new_score = Score(user_id=user_id,movie_id=movie_id,rating=rating,date=date)
+        self.df_scores = new_score.write_df(self.df_scores)
+    def baja_puntaje(self,id):
+        self.df_scores = self.df_scores[(self.df_scores['movie_id'] != movie_id) & (self.df_scores['user_id'] != user_id)]
+
+    def get_stats(self,user_id=None,movie_id=None):
+        #- Estadísticas por Usuario/Película: Calificación promedio de usuario, Calificación promedio por película.  
+        if user_id is not None:
+            user = self.df_people[self.df_people['id']==user_id].reset_index(drop=True)
+            user_name = user['Full Name'].iloc[0]
+            mask_scores = self.df_scores[self.df_scores['user_id']==user_id]
+            print(f"Votacion promedio de {user_name}: {mask_scores['rating'].mean()}")
+            
+        if movie_id is not None:
+            movie = self.df_movies[self.df_movies['id']==movie_id].reset_index(drop=True)
+            movie_name = movie.loc[0,'Name']
+            mask_scores = self.df_scores[self.df_scores['movie_id']==movie_id]
+            print(f"Votacion promedio de {movie_name}: {mask_scores['rating'].mean()}")
+
+        if ((movie_id is None) & (user_id is None)): 
+            print("Completar funcion")
+            # mask["Date"] = mask["Date"].apply(lambda x: datetime.strptime(x,'%Y-%m-%d %H:%M:%S'))
+            # mask = mask.reset_index(drop=True)
+
+            # # puntaje mas viejo
+            # row = mask.iloc[mask["Date"].idxmin()]
+            # print("Trabajador más viejo: ")
+            # first_score = cls(user_id = row["user_id"],movie_id = row["movie_id"],rating=row["rating"],date=row["Date"])
+            # print(first_score)        
+            # # puntaje mas nuevo
+            # row = mask.iloc[mask["Date"].idxmax()]
+            # print("Trabajador más nuevo: ")
+            # last_score =  cls(user_id = row["user_id"],movie_id = row["movie_id"],rating=row["rating"],date=row["Date"])
+            # print(last_score)        
+        
+            # #grafico de movie_id
+            score_movies = self.df_scores.groupby('movie_id').agg({'rating':('count','mean')})
+            print(score_movies)
+            # plt.figure(figsize=(10, 6))
+            # conteo.plot(kind='bar')
+            # plt.title('Cantidad de peliculas por puntajes')
+            # plt.xlabel('Puntaje')
+            # plt.ylabel('Cantidad de peliculas')
+            # plt.show()
+
+            # #Grafico por anio del puntaje
+            # mask["anio"] = mask["Date"].apply(lambda x: x.year)
+            # conteo = mask['anio'].value_counts()
+            # plt.figure(figsize=(10, 6))
+            # conteo.plot(kind='bar')
+            # plt.title('Cantidad de scores por año')
+            # plt.xlabel('Año')
+            # plt.ylabel('Cantidad de scores')
+            # plt.show()
